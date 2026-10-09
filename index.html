@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Studio Histoire IA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#fafafa;color:#1a1a1a;min-height:100vh;padding:1rem 1rem 6rem;font-size:15px;line-height:1.5;max-width:900px;margin:0 auto}
+h1{font-size:1.3rem;text-align:center;margin-bottom:.3rem}
+.sub{text-align:center;color:#777;font-size:.8rem;font-style:italic;margin-bottom:1rem}
+.box{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem;margin-bottom:1rem}
+.box.ok{border-color:#2d8a4e}
+.label{display:block;font-size:.72rem;color:#777;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+input[type=password],input[type=text],textarea,select{width:100%;padding:.75rem;border:1px solid #e5e5e5;background:#fafafa;color:#1a1a1a;border-radius:8px;font-family:inherit;font-size:.9rem;margin-bottom:.5rem}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#7c3aed}
+button{background:#7c3aed;color:#fff;border:none;padding:1rem;border-radius:12px;width:100%;font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:.7rem}
+button:disabled{opacity:.3}
+button.secondary{background:#1a1a1a}
+button.stop{background:#fff;color:#c0392b;border:1px solid #c0392b;font-size:.85rem;display:none}
+button.stop.visible{display:block}
+.add{background:transparent;border:2px dashed #ccc;color:#777;font-size:.85rem}
+.diag{background:#0a0a12;color:#a8d8b0;padding:.6rem;border-radius:6px;font-family:monospace;font-size:.7rem;line-height:1.5;min-height:30px;max-height:180px;overflow-y:auto;margin-bottom:.6rem;white-space:pre-wrap}
+.scene{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem;margin-bottom:.8rem}
+.scene-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
+.scene-num{background:#7c3aed;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.scene-title{font-size:.85rem;font-weight:600;flex:1}
+.scene-status{font-size:.65rem;padding:.2rem .5rem;border-radius:10px;background:#f5f5f5;color:#777;text-transform:uppercase;font-weight:600}
+.scene-status.done{background:#e3f5e9;color:#2d8a4e}
+.scene-status.processing{background:#fff5e3;color:#d4a017}
+.scene-status.failed{background:#fce3e3;color:#c0392b}
+.scene-remove{width:26px;height:26px;border-radius:50%;border:1px solid #e5e5e5;background:#fff;cursor:pointer;color:#c0392b;font-family:inherit}
+.field{margin-bottom:.6rem}
+.field label{display:block;font-size:.68rem;color:#777;margin-bottom:.3rem;text-transform:uppercase;font-weight:600}
+.field textarea{font-size:.85rem;min-height:55px}
+.img-zone{position:relative;border:2px dashed #e5e5e5;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;margin-bottom:.6rem}
+.img-zone input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.img-zone.has-img{padding:.4rem}
+.img-zone img{width:100%;max-height:150px;object-fit:contain;border-radius:6px;display:block}
+.img-text{font-size:.78rem;color:#1a1a1a}
+.img-hint{font-size:.65rem;color:#999;margin-top:.2rem}
+.rm-img{padding:.3rem .6rem;border:1px solid #e5e5e5;background:#fff;border-radius:6px;font-size:.68rem;color:#c0392b;cursor:pointer;margin-top:.3rem;font-family:inherit}
+.video-box{margin-top:.6rem;border-radius:8px;overflow:hidden;background:#000}
+.video-box video{width:100%;display:block;aspect-ratio:9/16;object-fit:contain}
+.styles{display:grid;grid-template-columns:1fr;gap:.4rem;margin-top:.4rem}
+select{padding:.7rem}
+.timer{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem;margin-bottom:1rem;display:none}
+.timer.visible{display:block}
+.timer-val{font-size:1.6rem;font-weight:600;text-align:center;font-family:monospace;margin-bottom:.3rem}
+.timer-lbl{font-size:.72rem;color:#777;text-align:center;text-transform:uppercase;margin-bottom:.6rem}
+.progress{width:100%;height:6px;background:#f5f5f5;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:#7c3aed;width:0%;transition:width .3s}
+.empty{text-align:center;padding:2rem;color:#999;font-size:.85rem}
+.tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:.3rem;margin-bottom:1rem;background:#fff;border-radius:12px;padding:.3rem;border:1px solid #e5e5e5}
+.tab{padding:.7rem;border-radius:8px;text-align:center;cursor:pointer;font-weight:600;color:#777}
+.tab.active{background:#1a1a1a;color:#fff}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%) translateY(-100px);background:#1a1a1a;color:#fff;padding:.8rem 1.2rem;border-radius:8px;font-size:.85rem;z-index:1000;opacity:0;transition:all .35s;max-width:90vw;text-align:center}
+.toast.visible{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:#2d8a4e}
+.toast.error{background:#c0392b}
+.toast.warn{background:#d4a017}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem}
+.g-item{border-radius:8px;overflow:hidden;border:1px solid #e5e5e5;background:#000}
+.g-item video{width:100%;display:block;aspect-ratio:9/16;object-fit:cover}
+.g-cap{padding:.4rem .6rem;background:#fff;font-size:.7rem;color:#777;display:flex;justify-content:space-between;align-items:center}
+.g-cap a{color:#2d8a4e;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+
+<h1>Studio Histoire IA</h1>
+<p class="sub">Creez des histoires en video, scene par scene</p>
+
+<div class="box" id="apiBox">
+  <label class="label">Cle API Agnes (sk-...)</label>
+  <input type="password" id="apiKey" placeholder="sk-...">
+  <button id="saveKeyBtn" class="secondary">Enregistrer la cle</button>
+  <div class="diag" id="apiDiag">Aucune cle</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tabHistoire">📖 Histoire</div>
+  <div class="tab" id="tabVideos">🎬 Videos</div>
+</div>
+
+<div class="tab-panel active" id="panelHistoire">
+
+  <div class="box">
+    <label class="label">Titre de l'histoire</label>
+    <input type="text" id="storyTitle" placeholder="Ex: Course poursuite a Paris">
+  </div>
+
+  <div class="box">
+    <label class="label">Style visuel global</label>
+    <select id="globalStyle">
+      <option value="faithful">🎯 Fidelite totale - aucun changement</option>
+      <option value="ghibli">🌿 Studio Ghibli - anime Miyazaki</option>
+      <option value="anime">🗾 Anime japonaise moderne</option>
+      <option value="pixar">✨ Pixar 3D</option>
+      <option value="disney">🏰 Disney 2D classique</option>
+      <option value="cartoon">🎨 Cartoon 2D</option>
+      <option value="realistic">📸 Realiste photographie pro</option>
+      <option value="netflix">🎬 Netflix cinematique</option>
+      <option value="jt">📺 JT News plateau tele</option>
+      <option value="wes">🎩 Wes Anderson symetrique</option>
+      <option value="noir">🌓 Film Noir N&B</option>
+      <option value="vhs">📼 VHS Annees 80</option>
+      <option value="scifi">🛸 Sci-Fi futuriste</option>
+    </select>
+  </div>
+
+  <div class="box">
+    <label class="label">Duree par video</label>
+    <select id="globalDuration">
+      <option value="5">5 secondes</option>
+      <option value="6" selected>6 secondes</option>
+      <option value="7">7 secondes</option>
+      <option value="8">8 secondes</option>
+      <option value="10">10 secondes</option>
+      <option value="12">12 secondes (max)</option>
+    </select>
+  </div>
+
+  <div class="diag" id="diag">Pret.</div>
+
+  <div id="scenesList"></div>
+
+  <button class="add" id="addSceneBtn">+ Ajouter une scene</button>
+
+  <button id="generateBtn" disabled>🎬 Generer l'histoire</button>
+  <button class="stop" id="stopBtn">⏹ Arreter</button>
+
+  <div class="timer" id="timer">
+    <div class="timer-val" id="timerVal">00:00</div>
+    <div class="timer-lbl" id="timerLbl">Preparation...</div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<div class="tab-panel" id="panelVideos">
+  <div class="box">
+    <label class="label">Videos generees</label>
+    <div class="gallery" id="gallery">
+      <div class="empty">Les videos apparaitront ici</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+var API_BASE = 'https://apihub.agnes-ai.com/v1';
+var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
+var MODEL_VIDEO = 'agnes-video-2.5-flash';
+var STORAGE_KEY = 'studio_histoire_key_v1';
+
+var STYLE_PROMPTS = {
+  faithful: '',
+  ghibli: 'Studio Ghibli animation aesthetic, Hayao Miyazaki cinematic style, hand-painted watercolor backgrounds, warm soft pastel palette, gentle nostalgic atmosphere, painterly texture.',
+  anime: 'Modern Japanese anime style, cel-shaded characters with sharp clean ink outlines, vibrant saturated colors, dramatic angular lighting, detailed background art, big expressive eyes.',
+  pixar: 'High-quality Pixar 3D animation style, subsurface scattering on skin, soft global illumination, expressive character design, detailed 3D modeling, cinematic depth of field.',
+  disney: 'Classic Disney 2D animation style, hand-drawn cel animation, elegant flowing line work, soft rim lighting, vibrant harmonious color palette, magical fairy-tale atmosphere.',
+  cartoon: '2D cartoon animation style, bold black outlines, flat vibrant color fills, clean vector look, playful modern cartoon aesthetic.',
+  realistic: 'Photorealistic cinematic photography, shot on 35mm film, natural balanced lighting, organic skin tones, subtle film grain, professional color grading.',
+  netflix: 'Netflix original series cinematic look, dramatic key light, shallow depth of field, teal and orange color grading, subtle film grain, prestige-TV atmosphere.',
+  jt: 'Professional television news studio look, soft studio lighting, neutral clean background, broadcast-quality color grading.',
+  wes: 'Wes Anderson cinematic style, perfect bilateral symmetry, deadpan centered framing, pastel color palette, planimetric staging, 35mm film grain.',
+  noir: 'Classic film noir aesthetic, high contrast black and white, dramatic chiaroscuro, deep shadows, smoky 1940s Hollywood cinematography.',
+  vhs: 'Vintage VHS aesthetic from the 1980s, analog video artifacts, scan lines, chromatic aberration, warm faded colors.',
+  scifi: 'Science-fiction cinematic aesthetic, cool blue and cyan atmospheric lighting, holographic particles, subtle lens flares, anamorphic look.'
+};
+
+var scenes = [];
+var currentKey = '';
+var isRunning = false;
+var stopFlag = false;
+
+// ══════════════════════════════════════════════════════════════════
+function log(msg){
+  var el = document.getElementById('diag');
+  var time = new Date().toLocaleTimeString('fr-FR');
+  el.textContent = el.textContent + '\n[' + time + '] ' + msg;
+  el.scrollTop = el.scrollHeight;
+}
+
+var toastTimeout = null;
+function toast(msg, type){
+  type = type || 'success';
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  requestAnimationFrame(function(){ t.classList.add('visible'); });
+  if(toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(function(){ t.classList.remove('visible'); }, 3000);
+}
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+// ══════════════════════════════════════════════════════════════════
+// API KEY
+// ══════════════════════════════════════════════════════════════════
+function getKey(){
+  try { return (localStorage.getItem(STORAGE_KEY) || '').trim(); }
+  catch(e){ return ''; }
+}
+
+function saveKey(){
+  var input = document.getElementById('apiKey');
+  var key = (input.value || '').trim().replace(/\s/g, '');
+  if(!key){
+    localStorage.removeItem(STORAGE_KEY);
+    updateApiUI();
+    toast('Cle supprimee', 'warn');
+    return;
+  }
+  if(key.indexOf('sk-') !== 0){
+    toast('La cle doit commencer par sk-', 'error');
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, key);
+  updateApiUI();
+  toast('Cle enregistree', 'success');
+  log('Cle API enregistree');
+}
+
+function updateApiUI(){
+  var key = getKey();
+  currentKey = key;
+  var diag = document.getElementById('apiDiag');
+  var box = document.getElementById('apiBox');
+  var input = document.getElementById('apiKey');
+  if(key){
+    box.classList.add('ok');
+    diag.textContent = 'Cle active: ' + key.slice(0, 10) + '...' + key.slice(-4) + ' (' + key.length + ' car.)';
+    input.value = key;
+  } else {
+    box.classList.remove('ok');
+    diag.textContent = 'Aucune cle enregistree';
+    input.value = '';
+  }
+  updateGenBtn();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCENES
+// ══════════════════════════════════════════════════════════════════
+function addScene(){
+  scenes.push({
+    id: Date.now() + Math.random(),
+    imageData: null,
+    description: '',
+    dialogue: '',
+    character: '',
+    status: 'idle',
+    videoUrl: null,
+    error: null
+  });
+  renderScenes();
+  updateGenBtn();
+}
+
+function removeScene(id){
+  scenes = scenes.filter(function(s){ return s.id !== id; });
+  renderScenes();
+  updateGenBtn();
+}
+
+function updateField(id, field, value){
+  for(var i = 0; i < scenes.length; i++){
+    if(scenes[i].id === id){ scenes[i][field] = value; break; }
+  }
+}
+
+function onImage(id, input){
+  var file = input.files && input.files[0];
+  if(!file) return;
+  if(file.type.indexOf('image/') !== 0){ toast('Fichier non image', 'error'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    for(var i = 0; i < scenes.length; i++){
+      if(scenes[i].id === id){ scenes[i].imageData = e.target.result; break; }
+    }
+    renderScenes();
+    log('Image chargee pour scene');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage(id){
+  for(var i = 0; i < scenes.length; i++){
+    if(scenes[i].id === id){ scenes[i].imageData = null; break; }
+  }
+  renderScenes();
+}
+
+function renderScenes(){
+  var list = document.getElementById('scenesList');
+  var html = '';
+  for(var i = 0; i < scenes.length; i++){
+    var s = scenes[i];
+    var stCls = 'scene-status';
+    var stTxt = 'En attente';
+    if(s.status === 'done'){ stCls += ' done'; stTxt = 'OK'; }
+    else if(s.status === 'processing'){ stCls += ' processing'; stTxt = 'En cours'; }
+    else if(s.status === 'failed'){ stCls += ' failed'; stTxt = 'Echec'; }
+
+    html += '<div class="scene">';
+    html += '<div class="scene-header">';
+    html += '<div class="scene-num">' + (i+1) + '</div>';
+    html += '<div class="scene-title">Scene ' + (i+1) + '</div>';
+    html += '<div class="' + stCls + '">' + stTxt + '</div>';
+    if(scenes.length > 1){
+      html += '<button class="scene-remove" onclick="removeScene(' + s.id + ')">X</button>';
+    }
+    html += '</div>';
+
+    // Image
+    html += '<div class="field"><label>Image de depart (optionnel)</label>';
+    if(s.imageData){
+      html += '<div class="img-zone has-img">';
+      html += '<img src="' + s.imageData + '">';
+      html += '<button class="rm-img" onclick="clearImage(' + s.id + ')">Retirer l\'image</button>';
+      html += '</div>';
+    } else {
+      html += '<div class="img-zone">';
+      html += '<input type="file" accept="image/*" onchange="onImage(' + s.id + ', this)">';
+      html += '<div class="img-text">+ Ajouter une image</div>';
+      html += '<div class="img-hint">jpg/png · optionnel</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="field"><label>Description de la scene</label>';
+    html += '<textarea placeholder="Ex: Un chat qui danse dans la rue..." oninput="updateField(' + s.id + ', \'description\', this.value)">' + esc(s.description) + '</textarea></div>';
+
+    html += '<div class="field"><label>Texte que le personnage dit</label>';
+    html += '<textarea placeholder="Ex: Bonjour tout le monde !" oninput="updateField(' + s.id + ', \'dialogue\', this.value)">' + esc(s.dialogue) + '</textarea></div>';
+
+    html += '<div class="field"><label>Description du personnage</label>';
+    html += '<textarea placeholder="Ex: Un chat noir aux yeux verts..." oninput="updateField(' + s.id + ', \'character\', this.value)">' + esc(s.character) + '</textarea></div>';
+
+    if(s.videoUrl){
+      html += '<div class="video-box"><video src="' + s.videoUrl + '" controls playsinline></video></div>';
+    }
+
+    html += '</div>';
+  }
+  list.innerHTML = html || '<div class="empty">Aucune scene. Ajoutez-en une.</div>';
+}
+
+function updateGenBtn(){
+  var btn = document.getElementById('generateBtn');
+  var hasKey = !!getKey();
+  var hasScenes = scenes.length > 0;
+  btn.disabled = !hasKey || !hasScenes || isRunning;
+  if(isRunning) btn.textContent = 'Generation en cours...';
+  else if(!hasKey) btn.textContent = 'Ajoutez votre cle API';
+  else if(!hasScenes) btn.textContent = 'Ajoutez une scene';
+  else btn.textContent = '🎬 Generer ' + scenes.length + ' video' + (scenes.length > 1 ? 's' : '');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RETRY FILE PLEINE
+// ══════════════════════════════════════════════════════════════════
+function envoyerVideo(body, maxTry){
+  maxTry = maxTry || 20;
+  return new Promise(function(resolve, reject){
+    var n = 0;
+    function essayer(){
+      if(stopFlag){ reject(new Error('Arret')); return; }
+      n++;
+      log('Tentative ' + n + '/' + maxTry);
+      fetch(API_BASE + '/videos', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + currentKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+      .then(function(res){
+        if(res.status === 503 || res.status === 502 || res.status === 504){
+          if(n >= maxTry){ reject(new Error('File pleine apres ' + maxTry + ' essais')); return; }
+          var wait = 20 + n * 10;
+          log('File pleine - retry ' + wait + 's');
+          setTimeout(essayer, wait * 1000);
+          return;
+        }
+        if(res.status === 429){
+          if(n >= maxTry){ reject(new Error('Rate limit')); return; }
+          log('Rate limit - retry 30s');
+          setTimeout(essayer, 30000);
+          return;
+        }
+        if(!res.ok){
+          res.text().then(function(t){
+            reject(new Error('HTTP ' + res.status + ' - ' + t.slice(0, 200)));
+          }).catch(function(){ reject(new Error('HTTP ' + res.status)); });
+          return;
+        }
+        res.json().then(resolve).catch(reject);
+      })
+      .catch(function(e){
+        if(n >= maxTry){ reject(e); return; }
+        log('Reseau - retry 10s');
+        setTimeout(essayer, 10000);
+      });
+    }
+    essayer();
+  });
+}
+
+function pollVideo(id){
+  return new Promise(function(resolve, reject){
+    var wait = 60;
+    function init(){
+      if(stopFlag){ reject(new Error('Arret')); return; }
+      if(wait <= 0) return startPoll();
+      wait--;
+      setTimeout(init, 1000);
+    }
+    function startPoll(){
+      var attempt = 0;
+      var intervals = [8, 8, 12, 12, 20, 20, 25];
+      function once(){
+        if(stopFlag){ reject(new Error('Arret')); return; }
+        if(attempt > 100) return reject(new Error('Timeout'));
+        attempt++;
+        var url = POLL_BASE + '?video_id=' + encodeURIComponent(id) + '&model_name=' + encodeURIComponent(MODEL_VIDEO);
+        fetch(url, { method: 'GET', headers: { 'Authorization': 'Bearer ' + currentKey } })
+        .then(function(res){ return res.json(); })
+        .then(function(d){
+          var status = d.status || 'unknown';
+          var prog = d.progress || 0;
+          log('Status: ' + status + ' ' + prog + '%');
+          if(status === 'completed' || status === 'succeeded' || status === 'done'){
+            var u = (d.metadata && d.metadata.url) || d.url || (d.output && d.output.url);
+            if(u) return resolve(u);
+            return reject(new Error('Pas URL'));
+          }
+          if(status === 'failed' || status === 'error' || status === 'cancelled'){
+            return reject(new Error('Echec ' + status));
+          }
+          var idx = Math.min(attempt - 1, intervals.length - 1);
+          setTimeout(once, intervals[idx] * 1000);
+        })
+        .catch(function(){ setTimeout(once, 5000); });
+      }
+      once();
+    }
+    init();
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GENERER UNE SCENE
+// ══════════════════════════════════════════════════════════════════
+function buildPrompt(scene, styleKey){
+  var styleP = STYLE_PROMPTS[styleKey] || '';
+  var parts = [
+    'ABSOLUTE FIDELITY - THE PROVIDED IMAGE IS THE EXACT FIRST FRAME.',
+    'MANDATORY PRESERVATION: same person, same face, same clothing (every button, every seam), same pose, same composition, same position of every element. Do NOT add anything. Do NOT remove anything. Do NOT change the background.'
+  ];
+  if(styleP) parts.push('STYLE (only light, color grade, rendering - NOT the subject): ' + styleP);
+  if(scene.description) parts.push('SCENE: ' + scene.description);
+  if(scene.character) parts.push('CHARACTER: ' + scene.character);
+  if(scene.dialogue) parts.push('The character says: "' + scene.dialogue + '"');
+  parts.push('MOTION: Moderate controlled motion. Natural breathing, slight head movements.');
+  parts.push('Vertical 9:16 portrait. No text, no watermark.');
+  return parts.join(' ');
+}
+
+function makePlaceholder(text){
+  // Image noire 576x1024 avec texte
+  var c = document.createElement('canvas');
+  c.width = 576; c.height = 1024;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, 576, 1024);
+  ctx.fillStyle = '#e5c15a';
+  ctx.font = 'bold 28px Arial';
+  ctx.textAlign = 'center';
+  var lines = String(text).match(/.{1,20}/g) || [''];
+  for(var i = 0; i < lines.length && i < 4; i++){
+    ctx.fillText(lines[i], 288, 512 - (lines.length-1)*20 + i*40);
+  }
+  return c.toDataURL('image/jpeg', 0.9);
+}
+
+function genererScene(scene, num, total, styleKey, duration){
+  return new Promise(function(resolve){
+    scene.status = 'processing';
+    renderScenes();
+    updateTimer('Scene ' + num + ' / ' + total, ((num-1)/total)*100);
+    log('=== Scene ' + num + ' ===');
+
+    var imageData = scene.imageData || makePlaceholder(scene.description || ('Scene ' + num));
+    var hasImage = !!scene.imageData;
+
+    var body = {
+      model: MODEL_VIDEO,
+      prompt: buildPrompt(scene, styleKey),
+      seconds: duration,
+      size: '720P',
+      aspect_ratio: '9:16'
+    };
+
+    if(hasImage){
+      body.mode = 'keyframe';
+      body.first_frame = imageData;
+      log('Mode: keyframe avec image');
+    } else {
+      body.mode = 'text-to-video';
+      log('Mode: text-to-video (pas image)');
+    }
+
+    envoyerVideo(body, 20)
+    .then(function(data){
+      var id = data.video_id || data.id || data.task_id || (data.data && data.data.video_id);
+      if(!id) throw new Error('Pas de video_id');
+      log('Tache: ' + String(id).slice(0, 30));
+      return pollVideo(id);
+    })
+    .then(function(url){
+      scene.status = 'done';
+      scene.videoUrl = url;
+      renderScenes();
+      renderGallery();
+      log('Scene ' + num + ' PRETE');
+      resolve(true);
+    })
+    .catch(function(e){
+      scene.status = 'failed';
+      scene.error = e.message;
+      renderScenes();
+      log('Scene ' + num + ' ECHEC: ' + e.message);
+      resolve(false);
+    });
+  });
+}
+
+function updateTimer(label, progress){
+  document.getElementById('timerLbl').textContent = label || '';
+  document.getElementById('progressFill').style.width = (progress || 0) + '%';
+  var s = Math.round((progress || 0) / 100 * 60);
+  var m = Math.floor(s / 60);
+  var ss = s % 60;
+  document.getElementById('timerVal').textContent = (m<10?'0':'') + m + ':' + (ss<10?'0':'') + ss;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LANCER
+// ══════════════════════════════════════════════════════════════════
+async function start(){
+  if(isRunning) return;
+  if(!currentKey){ toast('Ajoutez votre cle API', 'error'); return; }
+  if(scenes.length === 0){ toast('Ajoutez une scene', 'error'); return; }
+
+  isRunning = true;
+  stopFlag = false;
+  updateGenBtn();
+  document.getElementById('stopBtn').classList.add('visible');
+  document.getElementById('timer').classList.add('visible');
+
+  var styleKey = document.getElementById('globalStyle').value;
+  var duration = document.getElementById('globalDuration').value;
+  var total = scenes.length;
+
+  log('=== Debut ' + total + ' scene(s) ===');
+  log('Style: ' + styleKey + ' - Duree: ' + duration + 's');
+
+  var ok = 0;
+  for(var i = 0; i < scenes.length; i++){
+    if(stopFlag) break;
+    var success = await genererScene(scenes[i], i+1, total, styleKey, duration);
+    if(success) ok++;
+    updateTimer('Scene ' + (i+1) + ' / ' + total + ' terminee', ((i+1)/total)*100);
+  }
+
+  isRunning = false;
+  stopFlag = false;
+  updateGenBtn();
+  document.getElementById('stopBtn').classList.remove('visible');
+
+  var finalMsg = ok + '/' + total + ' video' + (ok > 1 ? 's' : '') + ' generee' + (ok > 1 ? 's' : '');
+  log('=== FIN: ' + finalMsg + ' ===');
+  toast(finalMsg, ok > 0 ? 'success' : 'error');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GALERIE
+// ══════════════════════════════════════════════════════════════════
+function renderGallery(){
+  var grid = document.getElementById('gallery');
+  var html = '';
+  var count = 0;
+  for(var i = 0; i < scenes.length; i++){
+    if(scenes[i].status === 'done' && scenes[i].videoUrl){
+      count++;
+      html += '<div class="g-item">';
+      html += '<video src="' + scenes[i].videoUrl + '" controls playsinline></video>';
+      html += '<div class="g-cap"><span>Scene ' + (i+1) + '</span>';
+      html += '<a href="' + scenes[i].videoUrl + '" target="_blank" download="scene-' + (i+1) + '.mp4">Telecharger</a>';
+      html += '</div></div>';
+    }
+  }
+  grid.innerHTML = html || '<div class="empty">Les videos apparaitront ici</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════
+function initTabs(){
+  document.getElementById('tabHistoire').addEventListener('click', function(){
+    this.classList.add('active');
+    document.getElementById('tabVideos').classList.remove('active');
+    document.getElementById('panelHistoire').classList.add('active');
+    document.getElementById('panelVideos').classList.remove('active');
+  });
+  document.getElementById('tabVideos').addEventListener('click', function(){
+    this.classList.add('active');
+    document.getElementById('tabHistoire').classList.remove('active');
+    document.getElementById('panelVideos').classList.add('active');
+    document.getElementById('panelHistoire').classList.remove('active');
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+function init(){
+  document.getElementById('saveKeyBtn').addEventListener('click', saveKey);
+  document.getElementById('apiKey').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); saveKey(); }
+  });
+  document.getElementById('addSceneBtn').addEventListener('click', addScene);
+  document.getElementById('generateBtn').addEventListener('click', start);
+  document.getElementById('stopBtn').addEventListener('click', function(){
+    stopFlag = true;
+    log('Arret demande');
+  });
+
+  updateApiUI();
+  initTabs();
+  addScene();
+  log('Studio pret - modele ' + MODEL_VIDEO);
+}
+
+init();
+</script>
+
+</body>
+</html>
